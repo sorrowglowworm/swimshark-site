@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>SwimShark Local Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --primary:#2563eb; --bg:#f7fafc; --card:#ffffff; --text:#1f2937; --muted:#6b7280; }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+    header{position:sticky;top:0;background:#0b1220;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px;z-index:5}
+    header .brand{font-weight:700;letter-spacing:.3px}
+    header .tip{opacity:.85;font-size:14px}
+    .container{max-width:1100px;margin:28px auto;padding:0 16px}
+    .card{background:var(--card);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.06);padding:18px;}
+    .grid{display:grid;gap:16px}
+    .grid-cols-2{grid-template-columns:1fr 1fr}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    label{font-size:14px;color:var(--muted)}
+    input[type="text"],input[type="number"],textarea,select{
+      width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;font-size:14px;outline:none}
+    textarea{min-height:420px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1.45;white-space:pre;overflow:auto}
+    .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-ghost{background:#eef2ff;color:#1e3a8a}
+    .btn-danger{background:#fee2e2;color:#991b1b}
+    .muted{color:var(--muted);font-size:13px}
+    .tabs{display:flex;gap:8px;margin:4px 0 14px}
+    .tab{padding:10px 14px;border-radius:999px;background:#eef2ff;color:#1e3a8a;cursor:pointer;font-weight:600}
+    .tab.active{background:#1e3a8a;color:#fff}
+    .hidden{display:none}
+    .badge{display:inline-block;background:#f1f5f9;color:#0f172a;border-radius:999px;padding:2px 10px;font-size:12px}
+    .hr{height:1px;background:#e5e7eb;margin:14px 0}
+    .note{background:#f8fafc;border:1px dashed #e5e7eb;border-radius:12px;padding:10px 12px;color:#334155}
+    .login-wrap{max-width:420px;margin:80px auto}
+    .center{text-align:center}
+    code{background:#f3f4f6;border-radius:6px;padding:1px 6px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">🏖 SwimShark Local Admin</div>
+    <div class="tip">（免 GitHub 登录的本地管理面板）</div>
+  </header>
+
+  <div class="container">
+    <!-- 登录卡片 -->
+    <div id="loginCard" class="card login-wrap">
+      <h2 class="center" style="margin:6px 0 14px">登录</h2>
+      <div class="grid">
+        <div>
+          <label>密码（已为你预设）</label>
+          <input id="pwd" type="password" placeholder="请输入密码，例如 sk2025">
+          <div class="muted">提示：本地校验，仅在你的浏览器内进行。</div>
+        </div>
+        <div class="row" style="justify-content:space-between">
+          <button class="btn btn-primary" id="loginBtn">登录</button>
+          <div class="muted">默认密码：<code>sk2025</code></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 后台主界面 -->
+    <div id="app" class="card hidden">
+      <div class="tabs">
+        <div id="tabEdit" class="tab active">✏️ 编辑现有产品</div>
+        <div id="tabCreate" class="tab">🆕 新建产品</div>
+      </div>
+
+      <!-- 编辑现有产品 -->
+      <section id="panelEdit">
+        <div class="grid grid-cols-2">
+          <div>
+            <label>选择产品文件（自动从 <code>products.html</code> 解析）</label>
+            <div class="row">
+              <select id="productSelect"></select>
+              <button class="btn btn-ghost" id="refreshList">刷新列表</button>
+            </div>
+            <div class="note" style="margin-top:8px">
+              若列表为空，请确保 <code>products.html</code> 中的产品链接使用
+              <code>href="products/xxx.html"</code> 或 <code>href="/products/xxx.html"</code>。
+            </div>
+            <div class="hr"></div>
+            <div class="row">
+              <button class="btn btn-primary" id="loadBtn">加载到编辑器</button>
+              <span class="badge" id="loadedTip" style="display:none">已加载</span>
+            </div>
+          </div>
+          <div>
+            <label>当前文件名</label>
+            <input id="currentFile" type="text" readonly>
+            <div class="muted">你可以直接编辑下方源码，然后下载覆盖原文件。</div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <label>HTML 源码编辑器</label>
+        <textarea id="editor" placeholder="这里将显示产品 HTML 源码……"></textarea>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-primary" id="downloadEdited">下载修改后的文件</button>
+          <button class="btn btn-ghost" id="copyName">复制文件名</button>
+          <button class="btn btn-danger" id="clearEditor">清空编辑器</button>
+        </div>
+        <div class="muted" style="margin-top:6px">
+          使用方法：下载后到 GitHub 覆盖同名文件（路径：<code>/products/文件名.html</code>）。Vercel 会自动发布。
+        </div>
+      </section>
+
+      <!-- 新建产品 -->
+      <section id="panelCreate" class="hidden">
+        <div class="grid grid-cols-2">
+          <div>
+            <label>产品标题（英文或拼音，影响 SEO）</label>
+            <input id="newTitle" type="text" placeholder="例如：Tropical Bikini">
+          </div>
+          <div>
+            <label>文件名（自动生成，可手动微调）</label>
+            <input id="newSlug" type="text" placeholder="tropical-bikini">
+          </div>
+          <div>
+            <label>价格（可选）</label>
+            <input id="newPrice" type="text" placeholder="例如：29.99">
+          </div>
+          <div>
+            <label>主图文件名（你将把图片放到 <code>/assets/uploads</code>）</label>
+            <input id="newImage" type="text" placeholder="例如：tropical-01.jpg">
+          </div>
+          <div class="grid" style="grid-template-columns:1fr">
+            <label>产品描述（支持换行）</label>
+            <textarea id="newDesc" style="min-height:160px" placeholder="描述内容……"></textarea>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <button class="btn btn-primary" id="genBtn">生成产品页面</button>
+          <button class="btn btn-ghost" id="previewBtn">预览 HTML</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <label>生成结果（只读预览，可直接下载）</label>
+        <textarea id="genOutput" readonly placeholder="点击【生成产品页面】后在此显示源码……"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-primary" id="downloadNew">下载新产品文件</button>
+        </div>
+        <div class="muted" style="margin-top:6px">
+          下载后的文件路径建议为：<code>/products/&lt;文件名&gt;.html</code>；主图请上传到 <code>/assets/uploads</code>。
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ====== 登录 ======
+    const loginCard = document.getElementById('loginCard');
+    const app = document.getElementById('app');
+    const loginBtn = document.getElementById('loginBtn');
+    const pwdInput = document.getElementById('pwd');
+    const PASSWORD = 'sk2025';
+
+    loginBtn.addEventListener('click', () => {
+      const ok = pwdInput.value.trim() === PASSWORD;
+      if (!ok) { alert('密码错误'); return; }
+      loginCard.classList.add('hidden');
+      app.classList.remove('hidden');
+      // 自动加载产品列表
+      loadProductList();
+    });
+
+    // Enter 提交
+    pwdInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+
+    // ====== Tab 切换 ======
+    const tabEdit = document.getElementById('tabEdit');
+    const tabCreate = document.getElementById('tabCreate');
+    const panelEdit = document.getElementById('panelEdit');
+    const panelCreate = document.getElementById('panelCreate');
+
+    function activate(tab) {
+      if (tab === 'edit') {
+        tabEdit.classList.add('active'); tabCreate.classList.remove('active');
+        panelEdit.classList.remove('hidden'); panelCreate.classList.add('hidden');
+      } else {
+        tabCreate.classList.add('active'); tabEdit.classList.remove('active');
+        panelCreate.classList.remove('hidden'); panelEdit.classList.add('hidden');
+      }
+    }
+    tabEdit.addEventListener('click', ()=>activate('edit'));
+    tabCreate.addEventListener('click', ()=>activate('create'));
+
+    // ====== 工具函数 ======
+    const $ = (id)=>document.getElementById(id);
+    function slugify(str){
+      return str.toLowerCase()
+        .replace(/[\u4e00-\u9fa5]/g,'')        // 去中文（可按需保留）
+        .replace(/[^a-z0-9]+/g,'-')
+        .replace(/^-+|-+$/g,'')
+        .replace(/--+/g,'-');
+    }
+    function downloadAsFile(filename, content){
+      const blob = new Blob([content], {type:'text/html;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      URL.revokeObjectURL(url); a.remove();
+    }
+
+    // ====== 编辑现有产品：列出 & 加载 ======
+    const productSelect = $('productSelect');
+    const refreshListBtn = $('refreshList');
+    const loadBtn = $('loadBtn');
+    const loadedTip = $('loadedTip');
+    const currentFile = $('currentFile');
+    const editor = $('editor');
+    const copyName = $('copyName');
+    const clearEditor = $('clearEditor');
+    const downloadEdited = $('downloadEdited');
+
+    async function loadProductList(){
+      try{
+        productSelect.innerHTML = '<option value="">（正在解析 products.html …）</option>';
+        // 拉取 /products.html 并解析其中指向 /products/*.html 的链接
+        const res = await fetch('/products.html', {cache:'no-store'});
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const anchors = Array.from(doc.querySelectorAll('a[href]'));
+        const hrefs = anchors
+          .map(a => a.getAttribute('href'))
+          .filter(href => href && (/^\/?products\/.+\.html$/i).test(href))
+          .map(href => href.startsWith('/') ? href : '/'+href);
+
+        const uniq = Array.from(new Set(hrefs)).sort();
+        if (uniq.length === 0) {
+          productSelect.innerHTML = '<option value="">（未解析到产品链接）</option>';
+          return;
+        }
+        productSelect.innerHTML = uniq.map(h=>`<option value="${h}">${h.replace('/products/','')}</option>`).join('');
+      }catch(err){
+        console.error(err);
+        productSelect.innerHTML = '<option value="">（解析失败：请检查 products.html）</option>';
+      }
+    }
+    refreshListBtn.addEventListener('click', loadProductList);
+
+    loadBtn.addEventListener('click', async ()=>{
+      const sel = productSelect.value;
+      if (!sel) { alert('请先选择产品文件'); return; }
+      try{
+        const res = await fetch(sel, {cache:'no-store'});
+        if (!res.ok) throw new Error('无法加载该文件');
+        const text = await res.text();
+        editor.value = text;
+        currentFile.value = sel.replace('/products/','');
+        loadedTip.style.display = 'inline-block';
+        setTimeout(()=>loadedTip.style.display='none', 1800);
+      }catch(e){
+        alert('加载失败：' + e.message);
+      }
+    });
+
+    copyName.addEventListener('click', ()=>{
+      if (!currentFile.value) return;
+      navigator.clipboard.writeText(currentFile.value);
+      alert('已复制文件名：' + currentFile.value);
+    });
+    clearEditor.addEventListener('click', ()=>{ editor.value=''; });
+
+    downloadEdited.addEventListener('click', ()=>{
+      const name = currentFile.value || 'edited-product.html';
+      if (!editor.value.trim()) { alert('编辑器为空'); return; }
+      downloadAsFile(name, editor.value);
+    });
+
+    // ====== 新建产品：生成模板 ======
+    const newTitle = $('newTitle');
+    const newSlug = $('newSlug');
+    const newPrice = $('newPrice');
+    const newImage = $('newImage');
+    const newDesc = $('newDesc');
+    const genBtn = $('genBtn');
+    const previewBtn = $('previewBtn');
+    const genOutput = $('genOutput');
+    const downloadNew = $('downloadNew');
+
+    newTitle.addEventListener('input', ()=>{
+      if (!newSlug.dataset.touched){ newSlug.value = slugify(newTitle.value); }
+    });
+    newSlug.addEventListener('input', ()=>{ newSlug.dataset.touched = '1'; });
+
+    function buildProductHtml({title, slug, price, imageFile, desc}){
+      const priceHtml = price ? `<p class="price" style="font-weight:700;font-size:18px;margin:8px 0">$${price}</p>` : '';
+      const safeTitle = title || 'New Product';
+      const safeDesc = (desc || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      const imgPath = imageFile ? `../assets/uploads/${imageFile}` : `../assets/uploads/placeholder.jpg`;
+
+      // 模板：统一使用你站点现有样式，引用 ../style.css，并保留基础结构（可按需扩）
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${safeTitle} – SwimShark</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .product-wrap{max-width:1000px;margin:24px auto;padding:0 16px}
+    .product-hero{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .product-hero img{width:100%;height:auto;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+    .product-info h1{margin:0 0 8px;font-size:28px}
+    .product-desc{color:#444;line-height:1.7}
+    .back-link{display:inline-block;margin:10px 0 0;color:#2563eb;text-decoration:none;font-weight:600}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a href="../index.html" class="logo">SwimShark</a>
+      <div class="nav-links">
+        <a href="../products.html">Products</a>
+        <a href="../about.html">About</a>
+        <a href="../contact.html">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="product-wrap">
+    <a class="back-link" href="../products.html">← Back to Products</a>
+    <div class="product-hero" style="margin-top:10px">
+      <div><img src="${imgPath}" alt="${safeTitle}"></div>
+      <div class="product-info">
+        <h1>${safeTitle}</h1>
+        ${priceHtml}
+        <div class="product-desc">${safeDesc || ''}</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>© ${new Date().getFullYear()} SwimShark. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>`;
+    }
+
+    function ensureSlug(val){
+      const s = (val||'').trim();
+      return s ? slugify(s) : 'new-product';
+    }
+
+    genBtn.addEventListener('click', ()=>{
+      const data = {
+        title: newTitle.value.trim(),
+        slug: ensureSlug(newSlug.value),
+        price: (newPrice.value||'').trim(),
+        imageFile: (newImage.value||'').trim(),
+        desc: newDesc.value
+      };
+      const html = buildProductHtml(data);
+      genOutput.value = html;
+      alert('已生成产品页面源码，请在下方点击“下载新产品文件”。');
+    });
+
+    previewBtn.addEventListener('click', ()=>{
+      if (!genOutput.value.trim()) { genBtn.click(); }
+      const blob = new Blob([genOutput.value], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    });
+
+    downloadNew.addEventListener('click', ()=>{
+      if (!genOutput.value.trim()) { alert('请先生成产品页面'); return; }
+      const name = ensureSlug(newSlug.value) + '.html';
+      downloadAsFile(name, genOutput.value);
+    });
+  </script>
+</body>
+</html>
