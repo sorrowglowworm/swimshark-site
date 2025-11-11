@@ -1,13 +1,43 @@
 backend:
   name: github
-  repo: sorrowglowworm/swimshark-site
-  branch: main
-  base_url: https://swimsk.com
+  repo: sorrowglowworm/swimshark-site     # 你的 GitHub 仓库
+  branch: main                            # 默认分支
+  base_url: https://swimsk.com            # 你的主域名（Netlify Identity 登录用）
   auth_endpoint: api/auth
+  site_domain: swimsk.com                 # 登录成功后跳回 /admin/
 
 publish_mode: editorial_workflow
-media_folder: "assets/uploads"
-public_folder: "/assets/uploads"
 
-site_url: https://swimsk.com
-logo_url: https://swimsk.com/assets/logo.png   # 可选
+media_folder: "assets/uploads"            # 上传文件的实际路径（存放在仓库）
+public_folder: "/assets/uploads"          # 前端访问路径
+
+site_url: https://swimsk.com              # 网站 URL
+logo_url: https://swimsk.com/assets/logo.png   # 可选 Logo
+
+local_backend: false                      # 关闭本地调试模式
+
+collections:
+  - name: "products"
+    label: "Products"
+    folder: "products"
+    create: true
+    slug: "{{slug}}"
+    extension: "html"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  - name: "pages"
+    label: "Pages"
+    files:
+      - label: "About Page"
+        name: "about"
+        file: "about.html"
+        fields:
+          - { label: "Content", name: "body", widget: "markdown" }
+
+      - label: "Contact Page"
+        name: "contact"
+        file: "contact.html"
+        fields:
+          - { label: "Content", name: "body", widget: "markdown" }
