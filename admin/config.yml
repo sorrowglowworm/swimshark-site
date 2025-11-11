@@ -1,21 +1,39 @@
-# ========= Netlify CMS 配置文件 =========
 backend:
-  name: github                # 后台使用 GitHub 登录
-  repo: sorrowglowworm/swimshark-site  # 你的仓库名
-  branch: main                # 主分支
+  name: git-gateway
+  branch: main
 
-# 图片文件夹设置
-media_folder: "assets"        # 上传的图片存放在项目的 assets 目录
-public_folder: "/assets"      # 网站访问时的路径
+media_folder: "assets"   # 图片上传到这里
+public_folder: "/assets" # 网站访问路径
 
-# ===== 内容集合（产品） =====
 collections:
-  - name: "products"          # 代码层使用的名字
-    label: "Products"         # 后台显示的名字
-    folder: "products"        # 产品页面所在文件夹
-    create: true              # 允许新建产品
-    slug: "{{slug}}"          # 文件命名方式（自动根据标题生成）
-    fields:                   # 定义表单字段
+  - name: "products"
+    label: "Products"
+    folder: "products"
+    create: true
+    slug: "{{slug}}"
+    fields:
       - { label: "Product Name", name: "title", widget: "string" }
-      - { label: "Main Image", name: "image", widget: "image" }
-      - { label: "Description", name: "body", widget: "markdown" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Product Image", name: "image", widget: "image" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+
+  - name: "home"
+    label: "Home Page"
+    files:
+      - file: "index.html"
+        label: "Homepage"
+        name: "index"
+        fields:
+          - { label: "Main Title", name: "headline", widget: "string" }
+          - { label: "Subtitle", name: "subheadline", widget: "string" }
+          - { label: "Button Text", name: "cta", widget: "string" }
+
+  - name: "about"
+    label: "About Page"
+    files:
+      - file: "about.html"
+        label: "About Us"
+        name: "about"
+        fields:
+          - { label: "Page Title", name: "title", widget: "string" }
+          - { label: "Content", name: "body", widget: "text" }
