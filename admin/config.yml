@@ -1,39 +1,13 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: sorrowglowworm/swimshark-site
   branch: main
+  base_url: https://swimsk.com
+  auth_endpoint: api/auth
 
-media_folder: "assets"   # 图片上传到这里
-public_folder: "/assets" # 网站访问路径
+publish_mode: editorial_workflow
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
 
-collections:
-  - name: "products"
-    label: "Products"
-    folder: "products"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Product Name", name: "title", widget: "string" }
-      - { label: "Description", name: "description", widget: "text" }
-      - { label: "Product Image", name: "image", widget: "image" }
-      - { label: "Publish Date", name: "date", widget: "datetime" }
-
-  - name: "home"
-    label: "Home Page"
-    files:
-      - file: "index.html"
-        label: "Homepage"
-        name: "index"
-        fields:
-          - { label: "Main Title", name: "headline", widget: "string" }
-          - { label: "Subtitle", name: "subheadline", widget: "string" }
-          - { label: "Button Text", name: "cta", widget: "string" }
-
-  - name: "about"
-    label: "About Page"
-    files:
-      - file: "about.html"
-        label: "About Us"
-        name: "about"
-        fields:
-          - { label: "Page Title", name: "title", widget: "string" }
-          - { label: "Content", name: "body", widget: "text" }
+site_url: https://swimsk.com
+logo_url: https://swimsk.com/assets/logo.png   # 可选
